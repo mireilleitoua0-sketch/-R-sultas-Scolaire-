@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Consultation_Des_Résultats</title>
+  
+  <!-- Manifeste PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#3498db" />
+
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; }
+    .container, .admin, .liste-eleves { background: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 20px auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h2 { text-align: center; color: #2c3e50; }
+    label { display: block; margin-top: 15px; }
+    input { width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; }
+    button { margin-top: 20px; width: 100%; padding: 10px; background-color: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background-color: #2980b9; }
+    .resultats { margin-top: 20px; display: none; text-align: center; }
+    .note { margin: 5px 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f9f9f9; }
+    .fonction{width: 100%;position: relative;margin-bottom: 25px;}
+    .photo-eleve { width: 120px; height: 120px; border-radius: 10px; object-fit: cover; margin: 10px auto; display: block; }
+    .admin { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Connexion</h2>
+  <label for="login">Identifiant</label>
+  <input type="text" id="login" />
+  <label for="mdp">Mot de passe</label>
+  <input type="password" id="mdp" />
+  <button onclick="connexion()">Consulter les résultats</button>
+  <button onclick="accesAdmin()">Accès Admin</button>
+
+  <div class="resultats" id="resultats">
+    <h2 id="eleveNom">Résultats</h2>
+    
+    <img id="elevePhoto" class="photo-eleve" src="" alt="Photo de l'élève" />
+    <p><strong>Classe :</strong> <span id="eleveClasse"></span></p>
+    <p class="note">Mathématiques : <span id="maths"></span></p>
+    <p class="note">Anglais : <span id="anglais"></span></p>
+    <p class="note">Histoire : <span id="histoire"></span></p>
+    <p class="note">Physique : <span id="physique"></span></p>
+    <p><strong>Moyenne :</strong> <span id="moyenne"></span> / 20</p>
+    <button onclick="envoyerWhatsApp()">Recevoir sur WhatsApp</button>
+  </div>
+</div>
+
+<div class="admin">
+  <h2>Ajouter un élève (École)</h2>
+  <label>Nom</label><input type="text" id="newNom" />
+  <label>Classe</label><input type="text" id="newClasse" />
+  <label>Identifiant</label><input type="text" id="newLogin" />
+  <label>Mot de passe</label><input type="text" id="newMdp" />
+  <label>Photo (URL)</label><input type="text" id="newPhoto" />
+  <label>Maths</label><input type="number" id="newMaths" />
+  <label>Anglais</label><input type="number" id="newAnglais" />
+  <label>Histoire</label><input type="number" id="newHistoire" />
+  <label>Physique</label><input type="number" id="newPhysique" />
+  <table Border="0">
+    <tr>
+      <td>Section</td>
+      <td>
+        <select name="fonction">
+          <option value="Maternelle">Maternelle</option>
+          <option value="Primaire">Primaire</option>
+          <option value="Collège">Collège</option>
+          <option value="lycée">Lycée</option>
+        </select>
+      </td>
+    </tr>
+  </table>
+  <button onclick="ajouterEleve()">Ajouter</button>
+</div>
+
+  <div class="liste-eleves">
+  <h2>Liste des élèves</h2>
+  <table id="tableEleves">
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Classe</th>
+        <th>Login</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+  let eleves = JSON.parse(localStorage.getItem("eleves")) || [
+    {
+      nom: "Nianga Archange",
+      login: "parent123",
+      mdp: "azerty",
+      classe: "3e",
+      photo: "https://via.placeholder.com/120",
+      notes: {
+        maths: 12,
+        anglais: 14,
+        histoire: 4,
+        physique: 6.5
+      }
+    }
+  ];
+
+  function sauvegarderEleves() {
+    localStorage.setItem("eleves", JSON.stringify(eleves));
+  }
+
+  function connexion() {
+    const login = document.getElementById("login").value.trim();
+    const mdp = document.getElementById("mdp").value.trim();
+    const resultats = document.getElementById("resultats");
+
+    const eleve = eleves.find(e => e.login === login && e.mdp === mdp);
+
+    if (eleve) {
+      document.getElementById("eleveNom").textContent = `Résultats de : ${eleve.nom}`;
+      document.getElementById("eleveClasse").textContent = eleve.classe;
+      document.getElementById("maths").textContent = eleve.notes.maths;
+      document.getElementById("anglais").textContent = eleve.notes.anglais;
+      document.getElementById("histoire").textContent = eleve.notes.histoire;
+      document.getElementById("physique").textContent = eleve.notes.physique;
+      document.getElementById("elevePhoto").src = eleve.photo || "https://via.placeholder.com/120";
+
+      const moyenne = ((eleve.notes.maths + eleve.notes.anglais + eleve.notes.histoire + eleve.notes.physique) / 4).toFixed(1);
+      document.getElementById("moyenne").textContent = moyenne;
+      resultats.style.display = "block";
+    } else {
+      alert("Identifiants incorrects. Veuillez réessayer.");
+    }
+  }
+
+  function envoyerWhatsApp() {
+    const nom = document.getElementById("eleveNom").textContent;
+    const classe = document.getElementById("eleveClasse").textContent;
+    const maths = document.getElementById("maths").textContent;
+    const anglais = document.getElementById("anglais").textContent;
+    const histoire = document.getElementById("histoire").textContent;
+    const physique = document.getElementById("physique").textContent;
+    const moyenne = document.getElementById("moyenne").textContent;
+
+    const message = encodeURIComponent(`${nom}\nClasse : ${classe}\nMaths : ${maths}\nAnglais : ${anglais}\nHistoire : ${histoire}\nPhysique : ${physique}\nMoyenne : ${moyenne} / 20`);
+    const numero = "242061617231";
+    window.open(`https://wa.me/${numero}?text=${message}`, "_blank");
+  }
+
+  function ajouterEleve() {
+    const nom = document.getElementById("newNom").value;
+    const classe = document.getElementById("newClasse").value;
+    const login = document.getElementById("newLogin").value;
+    const mdp = document.getElementById("newMdp").value;
+    const photo = document.getElementById("newPhoto").value;
+    const maths = parseFloat(document.getElementById("newMaths").value);
+    const anglais = parseFloat(document.getElementById("newAnglais").value);
+    const histoire = parseFloat(document.getElementById("newHistoire").value);
+    const physique = parseFloat(document.getElementById("newPhysique").value);
+
+    if (!nom || !classe || !login || !mdp || isNaN(maths) || isNaN(anglais) || isNaN(histoire) || isNaN(physique)) {
+      alert("Veuillez remplir tous les champs correctement.");
+      return;
+    }
+
+    eleves.push({
+      nom,
+      classe,
+      login,
+      mdp,
+      photo: photo || "https://via.placeholder.com/120",
+      notes: { maths, anglais, histoire, physique }
+    });
+
+    sauvegarderEleves();
+    alert("Élève ajouté avec succès !");
+
+    document.getElementById("newNom").value = "";
+    document.getElementById("newClasse").value = "";
+    document.getElementById("newLogin").value = "";
+    document.getElementById("newMdp").value = "";
+    document.getElementById("newPhoto").value = "";
+    document.getElementById("newMaths").value = "";
+    document.getElementById("newAnglais").value = "";
+    document.getElementById("newHistoire").value = "";
+    document.getElementById("newPhysique").value = "";
+
+    afficherTableEleves();
+  }
+
+  function supprimerEleve(login) {
+    eleves = eleves.filter(e => e.login !== login);
+    sauvegarderEleves();
+    afficherTableEleves();
+  }
+
+  function afficherTableEleves() {
+    const tbody = document.querySelector("#tableEleves tbody");
+    tbody.innerHTML = "";
+    eleves.forEach(e => {
+      const row = `<tr><td>${e.nom}</td><td>${e.classe}</td><td>${e.login}</td><td><button onclick="supprimerEleve('${e.login}')">Supprimer</button></td></tr>`;
+      tbody.innerHTML += row;
+    });
+  }
+
+  function accesAdmin() {
+    const code = prompt("Veuillez entrer le code d'accès administrateur :");
+    if (code === "Admin2025") {
+      document.querySelector(".admin").style.display = "block";
+      window.scrollTo(0, document.body.scrollHeight);
+    } else {
+      alert("Code incorrect.");
+    }
+  }
+
+  afficherTableEleves();
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('Service Worker enregistré.', reg))
+        .catch(err => console.error('Erreur enregistrement Service Worker :', err));
+    });
+  }
+</script>
+
+</body>
+</html>
+
+
